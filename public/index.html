@@ -1,0 +1,57 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Jogo Multiplayer Pegador</title>
+
+        <style>
+            #screen {
+                border: 10px solid #CCC;
+                image-rendering: pixelated;
+                image-rendering: crisp-edges;
+                image-rendering: -moz-crisp-edges;
+                width: 400px;
+                height: 400px;
+            }
+        </style>
+        <script src="/socket.io/socket.io.js"></script>
+    </head>
+    <body>
+        <canvas id="screen" width="10" height="10"></canvas>
+
+        <script type="module"> // o bloco de script, para importar um modulo, tb precisa se um modulo
+            import createGame from './game.js' // importando o modulo
+            import createKeyboardListener from './keyboard-listener.js' // importando o modulo
+            import renderScreen from './render-screen.js' // importando o modulo
+
+            const game = createGame()
+/*  Design Paterns chamado "Observer":
+    objeto "Subject" (é o objeto principal). Existem outros objetos chamado "Observer" (irão observar o "Subject")
+    Funcionamento:
+        toda vez que o "Subject" alterar o seu estado(fizer algo), ele irá notificar os "Observers" de uma forma especial.
+        O "Subject" não está preocupado se alguém ou quem está escutando ele, ele passa um trecho de informação para quem estiver interessado.
+        Os "Observers" que quiser, pega a informação que precisar. */
+            const keyboardListener = createKeyboardListener(document) // factory
+            keyboardListener.subscribe(game.movePlayer) // registrando o "Objserver":
+                // como teste, este comando acima pode ser omitido e informado diretamente no console do browser para fazer funcionar.
+
+            const screen = document.getElementById('screen')
+            renderScreen(screen, game, requestAnimationFrame)
+
+            const socket = io() // io é uma função global, que quando executada retorna um outro "desingn paterns", que é o "Event Emitter", este parece muito com um "Observer", porém, consegue colocar no evento um nome, no caso o 'connect' (abaixo)
+
+            // quando o client conseguir conectar com o server, irá receber o evento 'connect' (vai recebver este socket)
+            // este sockect tem um id (socket.id).
+            socket.on(`connect`, () => {
+                const playerId = socket.id
+                console.log(`Player connected on Client with id: ${playerId}`)
+            })
+
+            socket.on(`setup`, (state) => {
+//              console.log(`> Receiving "setup" event from server`)
+//              console.log(state)
+//              game.state = state // passa o state inteiro
+                game.setState(state) 
+            })
+        </script>
+    </body>
+</html>
