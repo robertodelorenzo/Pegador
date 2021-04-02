@@ -6,37 +6,36 @@ import * as socketio from "socket.io"
 
 const app = express()
 const server = http.createServer(app) // server é uma instancia padrao de um módulo http, está ligao ao node express
-// const sockets = socketio(server) 
+// const sockets = socketio(server)
 const sockets = new socketio.Server(server);
-// a factory socketio recebe o parametro server, está ligado ao http, e este ao express
-// as conexcoes acima estão interligadas e conversão entre si
+// a factory socketio recebe o parametro server, está ligado ao http, e este ao express as conexcoes acima estão interligadas e conversão entre si
 
 app.use(express.static('public'))
 
 const game = createGame()
-// game.addPlayer({ playerId: 'player1', playerX: 0, playerY: 0})
-// game.addPlayer({ playerId: 'player2', playerX: 7, playerY: 0})
-// game.addPlayer({ playerId: 'player3', playerX: 9, playerY: 0})
-// game.addFruit({ fruitId: 'fruit1', fruitX: 3, fruitY: 3})
-// game.addFruit({ fruitId: 'fruit2', fruitX: 3, fruitY: 5})
-// game.movePlayer({ playerId: 'player1', keyPressed: 'ArrowRight'})
+// game.start() // MARCA
 
-// console.log(game.state)
+// Observer para ficar observando o jogo, a cada comando que acontecer (addPlayer), irá emitir este comando para clientside(index.html) 
+game.subscribe((command) => {  // recebe o comando e reenvia no clienteside(index.html)
+    console.log(`> Emitting ${command.type}`)
+    sockets.emit(command.type, command) // Emite o tipo do comando e o objeto inteiro do comando
+})
 
-// instalar a dependencia socket.on:
-// Como o servidor vai centralizar vários sockets, isto abaixo é uma lista de socket´s (terão vários sockets conectados aqui dentro)
-// Quando um destes sockets conseguir conectar, este socket também irá emitir um evento de 'connection'
-// Dentro do callback (socket) ele vai injetar o socket em questão, 
-// Ex: Dado um client, que não se conectou ainda, se conecta no servidor, ele vai emitir este evento,
-//     e vai injetar este "objeto de socket" para dentro desta função.
+// instalar a dependencia socket.on:  Como o servidor vai centralizar vários sockets, isto abaixo é uma lista de socket´s (terão vários sockets conectados aqui dentro).  Quando um destes sockets conseguir conectar, este socket também irá emitir um evento de 'connection'.   Dentro do callback (socket) ele vai injetar o socket em questão, 
+// Ex: Dado um client, que não se conectou ainda, se conecta no servidor, ele vai emitir este evento, e vai injetar este "objeto de socket" para dentro desta função.
 sockets.on('connection', (socket) => {
-    const playerId = socket.id // assim que conexao retornar com sucesso, pego o id do socket e coloco com id do player (palyerId)
-    console.log(`> Player connected on Server with id: ${playerId}`)
+    const playerId = socket.id // assim que conexao retornar com sucesso, pego o id do socket e coloco com id do player (playerId)
+    console.log(`> Player connected: ${playerId}`)
 
-    game.addPlayer({ playerId: playerId }) // Utilizo o palyerId para adicionar um novo jogador
-    console.log(game.state) 
+    game.addPlayer({ playerId: playerId }) // Utilizo o playerId para adicionar um novo jogador
+    // console.log(game.state) 
 
-    socket.emit(`setup`, game.state)
+    socket.emit('setup', game.state) // Momento em que o client se conecta
+
+    socket.on('disconnect', () => {
+        game.removePlayer({ playerId: playerId })
+        console.log(`> Player disconnected: ${playerId}`)
+    })
 })
 
 server.listen(3000, () => {

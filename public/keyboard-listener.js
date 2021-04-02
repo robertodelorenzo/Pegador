@@ -1,34 +1,39 @@
 export default function createKeyboardListener(document) {
     const state = {
-        observers: [] // objeto que contem a lista de observers:
+        observers: [], // objeto que contem a lista de observers:
+        playerId: null
     }
 
-    function subscribe(observerFunction) {
-        // esta é a forma que o "Observer" consegue se registrar dentro de um "Subject"
+    function registerPlayerId(playerId) { // Registra de forma dinamica um playerId
+        state.playerId = playerId
+    }
+
+    function subscribe(observerFunction) { // esta é a forma que o "Observer" consegue se registrar dentro de um "Subject"
         state.observers.push(observerFunction) // para guardar esta funcao em algum lugar, dentro de um array chamado "observers"
     }
 
     function notifyAll(command) {
         for (const observerFunction of state.observers) {
-            observerFunction(command) // executo a funcao passada
+            observerFunction(command) // executo a "funcao" inteira, passada como parâmetro
         }
     }
 
-    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('keydown', handleKeydown)
 
-    function handleKeyDown(event) {
+    function handleKeydown(event) {
         const keyPressed = event.key
 
         const command = {
-            playerId: 'player1',
+            type: 'move-player', // MARCA
+            playerId: state.playerId,
             keyPressed
         }
 
-        // game.movePlayer(command)
         notifyAll(command)
-    }   
+    }
     
     return {
-        subscribe
+        subscribe,
+        registerPlayerId
     }
 }

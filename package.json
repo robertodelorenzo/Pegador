@@ -1,5 +1,5 @@
 {
-  "name": "Pegador",
+  "name": "pegador",
   "version": "1.0.0",
   "description": "Jogo Pegador",
   "main": "server.js",
@@ -16,5 +16,14 @@
     "install": "^0.13.0",
     "node": "^15.12.0",
     "socket.io": "^4.0.1"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robertodelorenzo/Pegador.git"
+  },
+  "bugs": {
+    "url": "https://github.com/robertodelorenzo/Pegador/issues"
+  },
+  "homepage": "https://github.com/robertodelorenzo/Pegador#readme"
 }

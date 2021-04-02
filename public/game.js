@@ -8,6 +8,19 @@ export default function createGame() { // é uma Factory, cria a instancia do jo
         }
     }
 
+    const observers = [] // Nao foi declarado no state porque não quero mandar uma lista de observers
+
+    function subscribe(observerFunction) {
+        // esta é a forma que o "Observer" consegue se registrar dentro de um "Subject"
+        observers.push(observerFunction) // para guardar esta funcao em algum lugar, dentro de um array chamado "observers"
+    }
+
+    function notifyAll(command) {
+        for (const observerFunction of observers) {
+            observerFunction(command) // executo a funcao passada
+        }
+    }
+
     function setState(newState) {
         Object.assign(state, newState)
     }
@@ -16,20 +29,33 @@ export default function createGame() { // é uma Factory, cria a instancia do jo
         const playerId = command.playerId
 //      const playerX = command.playerX
 //      const playerY = command.playerY
-        // Se dentro do command houver playerX, utilizo ele, senão, criou um valor randomico:
-        const playerX = 'playerX' in command ? command.playerX : Math.floor(Math.random() * state.screen.width)
+        const playerX = 'playerX' in command ? command.playerX : Math.floor(Math.random() * state.screen.width) // Se dentro do command houver playerX, utilizo ele, senão, criou um valor randomico:
         const playerY = 'playerY' in command ? command.playerY : Math.floor(Math.random() * state.screen.height)
 
         state.players[playerId] = {
             x: playerX,
             y: playerY
         }
+
+        // Toda vez que o addPlayer for rodado, irá notificar todos os observers que tal evento aconteceu:
+        notifyAll({
+            type: 'add-player',
+            playerId: playerId,
+            playerX: playerX,
+            playerY: playerY
+        })
     }
 
     function removePlayer(command) {
         const playerId = command.playerId
 
         delete state.players[playerId]
+
+        // Notifica todos os observers que este evento removePlayer aconteceu para este playerId:
+        notifyAll({
+            type: 'remove-player',
+            playerId: playerId
+        })
     }
 
     function addFruit(command) {
@@ -78,14 +104,14 @@ export default function createGame() { // é uma Factory, cria a instancia do jo
         const player = state.players[command.playerId]
         const moveFunction = acceptedMoves[keyPressed]
 
-        if (player && moveFunction) { // Se tecla nao for underfined
+        if (player && moveFunction) { // Se tecla nao for underfined:
             moveFunction(player)
             checkForFruitCollision(playerId)
         }
 
     }
 
-    // colisão
+    // colisão:
     function checkForFruitCollision(playerId) {
         const player = state.players[playerId]
 
@@ -107,7 +133,8 @@ export default function createGame() { // é uma Factory, cria a instancia do jo
         addFruit,
         removeFruit,
         state,
-        setState
+        setState,
+        subscribe
     }
 
 }
