@@ -17,7 +17,7 @@ const game = createGame()
 
 // Observer para ficar observando o jogo, a cada comando que acontecer (addPlayer), irá emitir este comando para clientside(index.html) 
 game.subscribe((command) => {  // recebe o comando e reenvia no clienteside(index.html)
-    console.log(`> Emitting ${command.type}`)
+    console.log(`> Emitting ${command.type}`) // Emite para todos os outros clients conectados
     sockets.emit(command.type, command) // Emite o tipo do comando e o objeto inteiro do comando
 })
 
@@ -35,6 +35,13 @@ sockets.on('connection', (socket) => {
     socket.on('disconnect', () => {
         game.removePlayer({ playerId: playerId })
         console.log(`> Player disconnected: ${playerId}`)
+    })
+
+    socket.on('move-player', (command) => {
+        command.playerId = playerId // mesmo que o client altere o command passando um plaer falso, eu pego o playerId do socket para evitar adulteração 
+        command.type = 'move-player'
+
+        game.movePlayer(command) // move no servdiro, de forma abstrata este jogador
     })
 })
 

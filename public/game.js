@@ -76,6 +76,8 @@ export default function createGame() { // é uma Factory, cria a instancia do jo
     }
 
     function movePlayer(command) {
+        notifyAll(command) // Notifica todos os observers(usuários) 
+
         const acceptedMoves = {
             ArrowUp(player) {
                 if (player.y -1 >= 0) {

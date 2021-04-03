@@ -30,8 +30,6 @@
             const keyboardListener = createKeyboardListener(document) // factory
             // como teste, este comando acima pode ser omitido e informado diretamente no console do browser para fazer funcionar.
             
-            const screen = document.getElementById('screen')
-            renderScreen(screen, game, requestAnimationFrame)
             
             const socket = io() // io é uma função global, que quando executada retorna um outro "desingn paterns", que é o "Event Emitter", este parece muito com um "Observer", porém, consegue colocar no evento um nome, no caso o 'connect' (abaixo)
             
@@ -39,6 +37,9 @@
             socket.on('connect', () => {
                 const playerId = socket.id
                 console.log(`Player connected on Client with id: ${playerId}`)
+
+                const screen = document.getElementById('screen')
+                renderScreen(screen, game, requestAnimationFrame, playerId) // somente renderiza a tela após uma conexão de sucesso, passando o playerId do socket
             })
             
             socket.on('setup', (state) => {
@@ -49,7 +50,10 @@
                 game.setState(state) 
                 
                 keyboardListener.registerPlayerId(playerId)
-                keyboardListener.subscribe(game.movePlayer) // registrando o "Objserver":
+                keyboardListener.subscribe(game.movePlayer) // registrando o "Objserver"
+                keyboardListener.subscribe((command) => {
+                    socket.emit('move-player', command)
+                })
             })
 
             // Escuta o evento add-player, recebendo o comando, logando e replicando o comando no state que está em todos os clients(todos os sockets) que estão conectados
@@ -61,6 +65,16 @@
             socket.on('remove-player', (command) => {
                 console.log(`> Receiving ${command.type} => ${command.playerId}`)
                 game.removePlayer(command)
+            })
+
+            socket.on('move-player', (command) => {
+                console.log(`> Receiving ${command.type} => ${command.playerId}`)
+
+                const playerId = socket.id
+
+                if (playerId !== command.playerId) { // qdo aplico um comando para todos, não posso aplicar o mesmo comando no próprio usuário que mandou!
+                    game.movePlayer(command) // aplicar no state local este comando
+                }
             })
         </script>
     </body>
